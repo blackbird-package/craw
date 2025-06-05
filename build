@@ -9,7 +9,7 @@ fi
 shc -f "$buildpath/src/craw" -o "$buildpath/pkg/craw"
 
 cd "$buildpath/pkg/"
-sudo cp -f craw /opt/rbin/
+#sudo cp -f craw /opt/rbin/
 tar c craw | xz > "package.tar.xz" &&
 
 
