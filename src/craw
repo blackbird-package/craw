@@ -1,0 +1,43 @@
+#!/bin/bash
+
+
+## CRAW KEY LUKS DRIVE ENCRYPTION
+## development by null
+## copyright@2025 PT LEKTOR MEDIA UTAMA
+
+
+cgetgrup=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
+clvparse="/dev/$cgetgrup/ring"
+
+
+function craw_open_ring_device() {
+
+    sudo cryptsetup luksOpen $clvparse lvm_ring
+
+    if [[ ! -d "/home/$USER/.ssh"  ]];then
+        mkdir -p "/home/$USER/.ssh"
+        chmod 700 /home/$USER/.ssh
+    fi
+    sudo mount /dev/mapper/lvm_ring /home/$USER/.ssh 
+}
+
+
+function craw_close_ring_device() {
+
+    mountar=$(lsblk | grep "/home/$USER/.ssh")
+    mountsc="/dev/mapper/lvm_ring"
+
+    if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
+        cd ~ && sudo umount -R /home/$USER/.ssh 
+        sudo cryptsetup luksClose /dev/mapper/lvm_ring
+    fi
+}
+
+
+if [[ -e $clvparse ]];then
+    if [[ ! -e /dev/mapper/lvm_ring ]];then
+        craw_open_ring_device
+    else
+        craw_close_ring_device
+    fi
+fi
