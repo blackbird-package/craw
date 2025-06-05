@@ -6,12 +6,22 @@
 ## copyright@2025 PT LEKTOR MEDIA UTAMA
 
 
+clear
+echo "-------------------------------------"
+echo " Craw vault management"
+echo " development by null@2025"
+echo "-------------------------------------"
+
+
 cgetgrup=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
 clvparse="/dev/$cgetgrup/ring"
 
 
 function craw_open_ring_device() {
 
+    echo "-------------------------------------"
+    echo "Insert encrypted vault password"
+    echo "-------------------------------------"
     sudo cryptsetup luksOpen $clvparse lvm_ring
 
     if [[ ! -d "/home/$USER/.ssh"  ]];then

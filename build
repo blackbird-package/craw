@@ -1,0 +1,20 @@
+#!/bin/sh
+
+buildpath=$(pwd)
+
+if [[ -e "$buildpath/pkg/craw" ]];then
+    rm "$buildpath/pkg/craw"
+fi
+
+shc -f "$buildpath/src/craw" -o "$buildpath/pkg/craw"
+
+cd "$buildpath/pkg/"
+tar c craw | xz > "package.tar.xz" &&
+
+
+if [[ -e "$buildpath/dist/package.tar.xz" ]];then
+    rm "$buildpath/dist/package.tar.xz"
+fi
+
+
+mv -f "package.tar.xz" "$buildpath/dist/"
