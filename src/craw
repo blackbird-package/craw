@@ -20,12 +20,12 @@ clvparse="/dev/$cgetgrup/ring"
 function craw_open_ring_device() {
 
     echo " OPENING : Insert vault password"
-   echo "-------------------------------------------------"
+    echo "-------------------------------------------------"
     sudo cryptsetup luksOpen $clvparse lvm_ring
 
     if [[ ! -d "/home/$USER/.ssh"  ]];then
-        mkdir -p "/home/$USER/.ssh"
-        chmod 700 /home/$USER/.ssh
+        sudo mkdir -p "/home/$USER/.ssh"
+        sudo chmod 700 /home/$USER/.ssh
     fi
     sudo mount /dev/mapper/lvm_ring /home/$USER/.ssh 
 }
