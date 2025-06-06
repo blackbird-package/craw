@@ -23,11 +23,11 @@ function craw_open_ring_device() {
     echo "-------------------------------------------------"
     sudo cryptsetup luksOpen $clvparse lvm_ring
 
-    if [[ ! -d "/home/$USER/.ssh"  ]];then
-        sudo mkdir -p "/home/$USER/.ssh"
-        sudo chmod 700 /home/$USER/.ssh
+    if [[ ! -d "$HOME/.ssh"  ]];then
+        sudo mkdir -p "$HOME/.ssh"
+        sudo chmod 700 "$HOME/.ssh"
     fi
-    sudo mount /dev/mapper/lvm_ring /home/$USER/.ssh 
+    sudo mount /dev/mapper/lvm_ring "$HOME/.ssh"
 }
 
 
@@ -36,11 +36,11 @@ function craw_close_ring_device() {
     echo " CLOSING : decrypt vault device"
     echo "-------------------------------------------------"
 
-    mountar=$(lsblk | grep "/home/$USER/.ssh")
+    mountar=$(lsblk | grep "$HOME/.ssh")
     mountsc="/dev/mapper/lvm_ring"
 
     if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
-        cd ~ && sudo umount -R /home/$USER/.ssh 
+        cd ~ && sudo umount -R "$HOME/.ssh"
         sudo cryptsetup luksClose /dev/mapper/lvm_ring
     fi
 }
