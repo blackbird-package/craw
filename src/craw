@@ -24,10 +24,12 @@ function craw_open_ring_device() {
     sudo cryptsetup luksOpen $clvparse lvm_ring
 
     if [[ ! -d "$HOME/.ssh"  ]];then
-        sudo mkdir -p "$HOME/.ssh"
-        sudo chmod 700 "$HOME/.ssh"
+        sudo mkdir -R -p "$HOME/.ssh"
+        sudo chmod -R 700 "$HOME/.ssh"
     fi
+    
     sudo mount /dev/mapper/lvm_ring "$HOME/.ssh"
+    sudo chown -R $USER:$USER "$HOME/.ssh"
 }
 
 
