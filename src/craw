@@ -128,7 +128,7 @@ function craw_exit_silo_device() {
 
 
         ## clean mount directory
-        sudo rm "$HOME/.local/share/applications/vault.desktop"  &&
+        rm "$HOME/.local/share/applications/vault.desktop"  &&
         sudo rm -fr "$HOME/silo"
     fi
 }
