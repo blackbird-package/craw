@@ -77,6 +77,8 @@ function craw_open_silo_device() {
     fi
 
     ln -s "/run/user/$UID/silo" "$HOME/silo"
+
+    cp "$HOME/silo/spawn/vault.desktop" "$HOME/.local/share/applications/"
 }
 
 
@@ -89,6 +91,7 @@ function craw_exit_silo_device() {
 
     if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
         cd ~ && 
+        rm "$HOME/.local/share/applications/vault.desktop"
         rm "$HOME/silo"
         sudo chown -R root:root "/run/user/$UID/silo" &&
         sudo umount "/run/user/$UID/silo" &&
