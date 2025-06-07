@@ -19,6 +19,8 @@ fi
 
 mv -f "package.tar.xz" "$buildpath/dist/"
 
+
+cd .. &&
 git add .
 git commit -m "update $(date)"
 git push
