@@ -22,7 +22,7 @@ siloparse="/dev/$silogrups/silo"
 
 function craw_open_ring_device() {
 
-    echo " OPENING : Insert crypto disk password"
+    echo " DECRYPT : Insert crypto keys volume password"
     echo "-------------------------------------------------"
     sudo cryptsetup luksOpen $ringparse lvm_ring
 
@@ -38,7 +38,7 @@ function craw_open_ring_device() {
 
 function craw_exit_ring_device() {
 
-    echo " CLOSING : Encrypting crypto disk device"
+    echo " ENCRYPT : Encrypting crypto keys volume"
     echo "-------------------------------------------------"
 
     mountar=$(lsblk | grep "$HOME/.ssh")
@@ -54,7 +54,7 @@ function craw_exit_ring_device() {
 function craw_ring_init() {
 
     if [[ -e $ringparse ]];then
-        if [[ ! -e /dev/mapper/lvm_ring ]];then
+        if [[ ! -e "/dev/mapper/lvm_ring" ]];then
             craw_open_ring_device
         else
             craw_exit_ring_device
@@ -65,7 +65,7 @@ function craw_ring_init() {
 
 function craw_open_silo_device() {
 
-    echo " OPENING : Insert cryto password"
+    echo " DECRYPT : Insert cryto silo volume password"
     echo "-------------------------------------------------"
     sudo cryptsetup luksOpen $siloparse lvm_silo
 
@@ -77,7 +77,7 @@ function craw_open_silo_device() {
 
 function craw_exit_silo_device() {
 
-    echo " CLOSING : Encrypting crypto disk device"
+    echo " ENCRYPT : Encrypting crypto silo volume"
     echo "-------------------------------------------------"
 
     mountsc="/dev/mapper/lvm_silo"
@@ -95,10 +95,44 @@ function craw_exit_silo_device() {
 function craw_silo_init() {
     if [[ -e $siloparse ]];then
         if [[ ! -e "/dev/mapper/lvm_silo" ]];then
-            silo_open_ring_device
+            craw_open_silo_device
         else
-            silo_close_ring_device
+            craw_exit_silo_device
         fi
+    fi
+}
+
+
+function craw_sync_init() {
+
+    if [[ ! -e "/dev/mapper/lvm_ring" ]];then
+        craw_open_ring_device
+        echo "[Info] : keys crypto volume is ready."
+    fi
+
+    if [[ ! -e "/dev/mapper/lvm_silo" ]];then
+        craw_open_silo_device
+        echo "[Info] : silo crypto volume is ready."
+    fi
+
+    echo "[Info] : prepare to backup keys volume crypto."
+    mkdir -p "$HOME/silo/keys"
+    
+    cp -f "$HOME/.ssh/*" "$HOME/silo/keys"
+    echo "[Info] : backup keys volume crypto finised."   
+}
+
+
+function craw_sync_exit() {
+
+    read -p "Do you want to close all crypto volume ? : [Y/n] " CRAWCLOSEALL
+
+    if [[ $CRAWCLOSEALL = "Y" ]] || [[ $CRAWCLOSEALL = "y" ]];then
+        echo "[Info] : Encrypt silo volume crypto."
+        craw_exit_silo_device
+
+        echo "[Info] : Encrypt keys volume crypto."
+        craw_exit_ring_device
     fi
 }
 
@@ -107,9 +141,19 @@ if [[ $1 == "keys" ]] && [[ ! -z $1 ]];then
 
     craw_ring_init
 
-elif [[ $1 == "silos" ]] && [[ ! -z $1 ]];then
+elif [[ $1 == "silo" ]] && [[ ! -z $1 ]];then
 
     craw_silo_init
+
+elif [[ $1 == "all" ]] && [[ ! -z $1 ]];then
+
+    craw_ring_init
+    craw_silo_init
+
+elif [[ $1 == "sync" ]] && [[ ! -z $1 ]];then
+
+    craw_silo_init
+    craw_sync_exit
 
 else
     echo "Error : command need parameter or paramenter its not available"
