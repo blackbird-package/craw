@@ -94,7 +94,6 @@ function craw_open_silo_vaults() {
     Type=Application
     Terminal=false
     Keywords=Game;Emulators;" > $HOME/.local/share/applications/vault.desktop 
-
 }
 
 
