@@ -152,7 +152,7 @@ elif [[ $1 == "all" ]] && [[ ! -z $1 ]];then
 
 elif [[ $1 == "sync" ]] && [[ ! -z $1 ]];then
 
-    craw_silo_init
+    craw_sync_init &&
     craw_sync_exit
 
 else
