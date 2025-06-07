@@ -1,25 +1,23 @@
 #!/bin/sh
 
+packageid="craw"
 buildpath=$(pwd)
 
-if [[ -e "$buildpath/pkg/craw" ]];then
-    rm "$buildpath/pkg/craw"
+if [[ -e "$buildpath/pkg/$packageid" ]];then
+    rm "$buildpath/pkg/$packageid"
 fi
 
-shc -f "$buildpath/src/craw" -o "$buildpath/pkg/craw"
-
+shc -f "$buildpath/src/$packageid" -o "$buildpath/pkg/$packageid"
 
 cd "$buildpath/pkg/"
-tar c craw | xz > "package.tar.xz" &&
 
+tar c $packageid | xz > "package.tar.xz" &&
 
 if [[ -e "$buildpath/dist/package.tar.xz" ]];then
     rm "$buildpath/dist/package.tar.xz"
 fi
 
-
 mv -f "package.tar.xz" "$buildpath/dist/"
-
 
 git add .
 git commit -m "update $(date)"

@@ -8,7 +8,7 @@
 
 clear
 echo "-------------------------------------------------"
-echo " Craw Vault Management"
+echo " Craw Keys Management"
 echo " development by null@2025"
 echo "-------------------------------------------------"
 
@@ -19,7 +19,7 @@ clvparse="/dev/$cgetgrup/ring"
 
 function craw_open_ring_device() {
 
-    echo " OPENING : Insert vault password"
+    echo " OPENING : Insert key crypto password"
     echo "-------------------------------------------------"
     sudo cryptsetup luksOpen $clvparse lvm_ring
 
@@ -35,7 +35,7 @@ function craw_open_ring_device() {
 
 function craw_close_ring_device() {
 
-    echo " CLOSING : decrypt vault device"
+    echo " CLOSING : Encrypting key crypto device"
     echo "-------------------------------------------------"
 
     mountar=$(lsblk | grep "$HOME/.ssh")
