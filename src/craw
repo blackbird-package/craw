@@ -8,20 +8,23 @@
 
 clear
 echo "-------------------------------------------------"
-echo " Craw Keys Management"
+echo " Craw : Crypto Vault Manager"
 echo " development by null@2025"
 echo "-------------------------------------------------"
 
 
-cgetgrup=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
-clvparse="/dev/$cgetgrup/ring"
+ringgrups=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
+ringparse="/dev/$ringgrups/ring"
+
+silogrups=$( sudo lvs | grep "silo" | awk $'{ print $2 }')
+siloparse="/dev/$silogrups/silo"
 
 
 function craw_open_ring_device() {
 
-    echo " OPENING : Insert key crypto password"
+    echo " OPENING : Insert crypto disk password"
     echo "-------------------------------------------------"
-    sudo cryptsetup luksOpen $clvparse lvm_ring
+    sudo cryptsetup luksOpen $ringparse lvm_ring
 
     if [[ ! -d "$HOME/.ssh"  ]];then
         sudo mkdir -R -p "$HOME/.ssh"
@@ -33,9 +36,9 @@ function craw_open_ring_device() {
 }
 
 
-function craw_close_ring_device() {
+function craw_exit_ring_device() {
 
-    echo " CLOSING : Encrypting key crypto device"
+    echo " CLOSING : Encrypting crypto disk device"
     echo "-------------------------------------------------"
 
     mountar=$(lsblk | grep "$HOME/.ssh")
@@ -48,10 +51,67 @@ function craw_close_ring_device() {
 }
 
 
-if [[ -e $clvparse ]];then
-    if [[ ! -e /dev/mapper/lvm_ring ]];then
-        craw_open_ring_device
-    else
-        craw_close_ring_device
+function craw_ring_init() {
+
+    if [[ -e $ringparse ]];then
+        if [[ ! -e /dev/mapper/lvm_ring ]];then
+            craw_open_ring_device
+        else
+            craw_exit_ring_device
+        fi
     fi
+}
+
+
+function craw_open_silo_device() {
+
+    echo " OPENING : Insert cryto password"
+    echo "-------------------------------------------------"
+    sudo cryptsetup luksOpen $siloparse lvm_silo
+
+    sudo mount -m /dev/mapper/lvm_silo "/run/user/$UID/silo"
+    sudo chown -R $USER:$USER "/run/user/$UID/silo"
+    ln -s "/run/user/$UID/silo" "$HOME/silo"
+}
+
+
+function craw_exit_silo_device() {
+
+    echo " CLOSING : Encrypting crypto disk device"
+    echo "-------------------------------------------------"
+
+    mountsc="/dev/mapper/lvm_silo"
+
+    if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
+        cd ~ && 
+        rm "$HOME/silo"
+        sudo chown -R root:root "/run/user/$UID/silo" &&
+        sudo umount "/run/user/$UID/silo" &&
+        sudo cryptsetup luksClose /dev/mapper/lvm_silo
+    fi
+}
+
+
+function craw_silo_init() {
+    if [[ -e $siloparse ]];then
+        if [[ ! -e "/dev/mapper/lvm_silo" ]];then
+            silo_open_ring_device
+        else
+            silo_close_ring_device
+        fi
+    fi
+}
+
+
+if [[ $1 == "keys" ]] && [[ ! -z $1 ]];then
+
+    craw_ring_init
+
+elif [[ $1 == "silos" ]] && [[ ! -z $1 ]];then
+
+    craw_silo_init
+    
+else
+
+    error "parameter not availanle"
 fi
