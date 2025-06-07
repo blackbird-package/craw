@@ -110,8 +110,7 @@ if [[ $1 == "keys" ]] && [[ ! -z $1 ]];then
 elif [[ $1 == "silos" ]] && [[ ! -z $1 ]];then
 
     craw_silo_init
-    
-else
 
-    error "parameter not availanle"
+else
+    echo "Error : command need parameter or paramenter its not available"
 fi
