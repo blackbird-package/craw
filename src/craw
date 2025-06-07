@@ -8,92 +8,101 @@
 
 clear
 echo "-------------------------------------------------"
-echo " Craw : Crypto Vault Manager"
+echo " Craw : Crypto Volume Manager"
 echo " development by null@2025"
 echo "-------------------------------------------------"
 
 
-ringgrups=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
-ringparse="/dev/$ringgrups/ring"
+function craw_open_keys_device() {
 
-silogrups=$( sudo lvs | grep "silo" | awk $'{ print $2 }')
-siloparse="/dev/$silogrups/silo"
+    ringgrups=$( sudo lvs | grep "ring" | awk $'{ print $2 }')
+    ringparse="/dev/$ringgrups/ring"
+    ringmount=$(lsblk -o mountpoints | grep ".ssh")
 
-
-function craw_open_ring_device() {
-
-    echo " DECRYPT : Insert crypto keys volume password"
-    echo "-------------------------------------------------"
-    sudo cryptsetup luksOpen $ringparse lvm_ring
-
-    if [[ ! -d "$HOME/.ssh"  ]];then
-        sudo mkdir -R -p "$HOME/.ssh"
-        sudo chmod -R 700 "$HOME/.ssh"
+    ## decrypt volume
+    if [[ ! -e "/dev/mapper/lvm_ring" ]];then
+        echo " DECRYPT : Insert crypto keys volume password"
+        echo "-------------------------------------------------"
+        sudo cryptsetup luksOpen "$ringparse" lvm_ring
     fi
-    
+
+    ## validate nomount
+    if [[ ! -z "$ringmount" ]];then
+        sudo umount -R "$ringmount"
+    fi
+
+    ## prepare directory 
+    mkdir -p "$HOME/.ssh"
+
+    ## mounting to directory 
     sudo mount /dev/mapper/lvm_ring "$HOME/.ssh"
-    sudo chown -R $USER:$USER "$HOME/.ssh"
+
+    ## set access to directory
+    sudo chown -R "$USER:$USER" "$HOME/.ssh"
+    sudo chmod -R 700 "$HOME/.ssh"
 }
 
 
-function craw_exit_ring_device() {
+function craw_exit_keys_device() {
 
     echo " ENCRYPT : Encrypting crypto keys volume"
     echo "-------------------------------------------------"
 
-    mountar=$(lsblk | grep "$HOME/.ssh")
+    mountar=$(lsblk -o mountpoints | grep ".ssh")
     mountsc="/dev/mapper/lvm_ring"
 
-    if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
-        cd ~ && sudo umount -R "$HOME/.ssh"
+    if [[ ! -z "$mounted" ]] || [[ -e "$mountsc" ]];then
+        cd ~ && sudo umount -R "$mountar" &&
         sudo cryptsetup luksClose /dev/mapper/lvm_ring
-    fi
-}
-
-
-function craw_ring_init() {
-
-    if [[ -e $ringparse ]];then
-        if [[ ! -e "/dev/mapper/lvm_ring" ]];then
-            craw_open_ring_device
-        else
-            craw_exit_ring_device
-        fi
     fi
 }
 
 
 function craw_open_silo_device() {
 
-    echo " DECRYPT : Insert cryto silo volume password"
-    echo "-------------------------------------------------"
-    sudo cryptsetup luksOpen $siloparse lvm_silo
+    silogrups=$( sudo lvs | grep "silo" | awk $'{ print $2 }')
+    siloparse="/dev/$silogrups/silo"
+    silomount=$(lsblk -o mountpoints | grep "silo")
 
-    sudo mount -m /dev/mapper/lvm_silo "/run/user/$UID/silo"
-    sudo chown -R $USER:$USER "/run/user/$UID/silo"
 
-    if [[ -e "$HOME/silo" ]];then
-        rm "$HOME/silo"
+    ## decrypt volume
+    if [[ ! -e "/dev/mapper/lvm_ring" ]];then
+        echo " DECRYPT : Insert cryto silo volume password"
+        echo "-------------------------------------------------"
+        sudo cryptsetup luksOpen "$siloparse" lvm_silo
     fi
 
-    ln -s "/run/user/$UID/silo" "$HOME/silo"
 
+    ## validate nomount
+    if [[ ! -z "$silomount" ]];then
+        sudo umount -R "$silomount"
+    fi
+
+    
+    ## prepare directory 
+    mkdir -p "$HOME/silo"
+
+
+    ## mount silo to user directory
+    sudo mount -m /dev/mapper/lvm_silo "$HOME/silo"
+
+
+    ## set access to directory
+    sudo chown -R "$USER:$USER" "$HOME/silo"
+    sudo chmod -R 700 "$HOME/silo"
+
+
+    ## set vault operating system
     if [[ -e "$HOME/silo/spawn/vault.img" ]];then
-        craw_open_silo_vaults
+        printf "[Desktop Entry]
+        Version=1.0
+        Name=Blackbox
+        Icon=$HOME/silo/spawn/vault.png
+        Exec=qemu-system-x86_64 -enable-kvm -m 4G -smp 4 -machine q35 -cpu host -device intel-hda -device hda-duplex -device virtio-vga-gl -rtc base=utc -display gtk,gl=on,show-cursor=on -usb -device usb-tablet -hda $HOME/silo/spawn/vault.img
+        Type=Application
+        Terminal=false
+        Keywords=Game;Emulators;" > $HOME/.local/share/applications/vault.desktop 
     fi
-}
-
-
-function craw_open_silo_vaults() {
-
-    printf "[Desktop Entry]
-    Version=1.0
-    Name=Blackbox
-    Icon=$HOME/silo/spawn/vault.png
-    Exec=qemu-system-x86_64 -enable-kvm -m 4G -smp 4 -machine q35 -cpu host -device intel-hda -device hda-duplex -device virtio-vga-gl -rtc base=utc -display gtk,gl=on,show-cursor=on -usb -device usb-tablet -hda $HOME/silo/spawn/vault.img
-    Type=Application
-    Terminal=false
-    Keywords=Game;Emulators;" > $HOME/.local/share/applications/vault.desktop 
 }
 
 
@@ -102,34 +111,33 @@ function craw_exit_silo_device() {
     echo " ENCRYPT : Encrypting crypto silo volume"
     echo "-------------------------------------------------"
 
+    mountar=$(lsblk -o mountpoints | grep "silo")
     mountsc="/dev/mapper/lvm_silo"
 
-    if [[ ! -z $mounted ]] || [[ -e $mountsc ]];then
+
+    if [[ ! -z $mountar ]] || [[ -e $mountsc ]];then
+
         cd ~ && 
-        rm "$HOME/.local/share/applications/vault.desktop"
-        rm "$HOME/silo"
-        sudo chown -R root:root "/run/user/$UID/silo" &&
-        sudo umount "/run/user/$UID/silo" &&
+
+        ## return default access
+        sudo umount -R "$mountar" &&
+
+
+        ## decrypt silo volume
         sudo cryptsetup luksClose /dev/mapper/lvm_silo
+
+
+        ## clean mount directory
+        sudo rm "$HOME/.local/share/applications/vault.desktop"  &&
+        sudo rm -fr "$HOME/silo"
     fi
 }
 
 
-function craw_silo_init() {
-    if [[ -e $siloparse ]];then
-        if [[ ! -e "/dev/mapper/lvm_silo" ]];then
-            craw_open_silo_device
-        else
-            craw_exit_silo_device
-        fi
-    fi
-}
-
-
-function craw_sync_init() {
+function craw_sync_data_device() {
 
     if [[ ! -e "/dev/mapper/lvm_ring" ]];then
-        craw_open_ring_device
+        craw_open_keys_device
         echo "[Info] : keys crypto volume is ready."
     fi
 
@@ -143,16 +151,12 @@ function craw_sync_init() {
     
     cp -fr "$HOME/.ssh/"* "$HOME/silo/keys/"
     echo "[Info] : backup keys volume crypto finised."   
-}
-
-
-function craw_sync_exit() {
 
     read -p "Do you want to close all crypto volume ? : [Y/n] " CRAWCLOSEALL
 
     if [[ $CRAWCLOSEALL = "Y" ]] || [[ $CRAWCLOSEALL = "y" ]];then
         echo "[Info] : Encrypt silo volume crypto."
-        craw_exit_silo_device
+        craw_exit_keys_device
 
         echo "[Info] : Encrypt keys volume crypto."
         craw_exit_ring_device
@@ -160,23 +164,27 @@ function craw_sync_exit() {
 }
 
 
-if [[ $1 == "keys" ]] && [[ ! -z $1 ]];then
 
-    craw_ring_init
 
-elif [[ $1 == "silo" ]] && [[ ! -z $1 ]];then
+if [[ $1 == "open" ]] && [[ $2 == "keys" ]] && [[ ! -z $1 ]] && [[ ! -z $2  ]];then
 
-    craw_silo_init
+    craw_open_keys_device
 
-elif [[ $1 == "all" ]] && [[ ! -z $1 ]];then
+elif [[ $1 == "close" ]] && [[ $2 == "keys" ]] && [[ ! -z $1 ]] && [[ ! -z $2  ]];then
 
-    craw_ring_init
-    craw_silo_init
+    craw_exit_keys_device
+
+elif [[ $1 == "open" ]] && [[ $2 == "vault" ]] && [[ ! -z $1 ]] && [[ ! -z $2  ]];then
+
+    craw_open_silo_device
+
+elif [[ $1 == "close" ]] && [[ $2 == "vault" ]] && [[ ! -z $1 ]] && [[ ! -z $2  ]];then
+
+    craw_exit_silo_device
 
 elif [[ $1 == "sync" ]] && [[ ! -z $1 ]];then
 
-    craw_sync_init
-    craw_sync_exit
+    craw_sync_data_device
 
 else
 
