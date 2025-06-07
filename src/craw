@@ -71,6 +71,11 @@ function craw_open_silo_device() {
 
     sudo mount -m /dev/mapper/lvm_silo "/run/user/$UID/silo"
     sudo chown -R $USER:$USER "/run/user/$UID/silo"
+
+    if [[ -e "$HOME/silo" ]];then
+        rm "$HOME/silo"
+    fi
+    
     ln -s "/run/user/$UID/silo" "$HOME/silo"
 }
 
