@@ -78,7 +78,23 @@ function craw_open_silo_device() {
 
     ln -s "/run/user/$UID/silo" "$HOME/silo"
 
-    ln -s "$HOME/silo/spawn/vault.desktop" "$HOME/.local/share/applications/vault.desktop"
+    if [[ -e "$HOME/silo/spawn/vault.img" ]];then
+        craw_open_silo_vaults
+    fi
+}
+
+
+function craw_open_silo_vaults() {
+
+    printf "[Desktop Entry]
+    Version=1.0
+    Name=Blackbox
+    Icon=$HOME/silo/spawn/chrome/logo.png
+    Exec=qemu-system-x86_64 -enable-kvm -m 4G -smp 4 -machine q35 -cpu host -device intel-hda -device hda-duplex -device virtio-vga-gl -rtc base=utc -display gtk,gl=on,show-cursor=on -usb -device usb-tablet -hda $HOME/silo/spawn/vault.img
+    Type=Application
+    Terminal=false
+    Keywords=Game;Emulators;" > $HOME/.local/share/applications/vault.desktop 
+
 }
 
 
