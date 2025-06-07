@@ -118,7 +118,7 @@ function craw_sync_init() {
     echo "[Info] : prepare to backup keys volume crypto."
     mkdir -p "$HOME/silo/keys"
     
-    cp -fr "$HOME/.ssh/*" "$HOME/silo/keys/"
+    cp -fr "$HOME/.ssh/"* "$HOME/silo/keys/"
     echo "[Info] : backup keys volume crypto finised."   
 }
 
