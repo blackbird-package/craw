@@ -78,7 +78,7 @@ function craw_open_silo_device() {
 
     ln -s "/run/user/$UID/silo" "$HOME/silo"
 
-    cp "$HOME/silo/spawn/vault.desktop" "$HOME/.local/share/applications/"
+    ln -s "$HOME/silo/spawn/vault.desktop" "$HOME/.local/share/applications/vault.desktop"
 }
 
 
